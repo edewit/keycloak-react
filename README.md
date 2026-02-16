@@ -7,6 +7,8 @@ React components for Keycloak authentication, inspired by [Clerk](https://clerk.
 - Conditional rendering components (SignedIn, SignedOut, Protect)
 - Headless hooks for custom UI
 
+> **Note:** This library is designed for **client-side rendering only**. It relies on browser APIs (`window`, `document`) and the `keycloak-js` library, which requires browser-based OAuth redirect flows. If you're using an SSR framework like Next.js or Remix, you'll need to ensure these components only render on the client (e.g., using `"use client"` directives or dynamic imports with `ssr: false`).
+
 ## Installation
 
 ```bash
