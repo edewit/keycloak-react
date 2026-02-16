@@ -1,0 +1,66 @@
+.kc-user-button {
+  display: inline-block;
+}
+
+.kc-user-button__toggle {
+  padding: 0 !important;
+  border-radius: 50%;
+}
+
+.kc-user-button__toggle:hover {
+  background-color: transparent !important;
+}
+
+.kc-user-button__toggle:hover .kc-user-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--pf-v5-global--primary-color--100, #06c);
+}
+
+.kc-user-button__toggle:focus {
+  outline: none;
+}
+
+.kc-user-button__toggle:focus .kc-user-avatar {
+  box-shadow: 0 0 0 2px var(--pf-v5-global--primary-color--100, #06c);
+}
+
+.kc-user-button__user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  min-width: 200px;
+}
+
+.kc-user-button__user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.kc-user-button__user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--pf-v5-global--Color--100, #151515);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kc-user-button__user-email {
+  font-size: 12px;
+  color: var(--pf-v5-global--Color--200, #6a6e73);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dark theme support */
+[data-pf-theme="dark"] .kc-user-button__user-name {
+  color: var(--pf-v5-global--Color--100, #f0f0f0);
+}
+
+[data-pf-theme="dark"] .kc-user-button__user-email {
+  color: var(--pf-v5-global--Color--200, #a3a6a9);
+}

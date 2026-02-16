@@ -1,0 +1,94 @@
+{
+  "name": "keycloak-react",
+  "version": "0.1.0",
+  "description": "React components for Keycloak authentication",
+  "type": "module",
+  "main": "./dist/keycloak-react.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/keycloak-react.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./account": {
+      "import": "./dist/account.js",
+      "types": "./dist/account.d.ts"
+    },
+    "./styles.css": "./dist/keycloak-react.css",
+    "./account.css": "./dist/account.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "demo": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "@keycloak/keycloak-account-ui": "^26.0.0",
+    "@keycloak/keycloak-ui-shared": "^26.0.0",
+    "@patternfly/react-core": "^5.4.14",
+    "@patternfly/react-icons": "^5.4.2",
+    "@patternfly/react-styles": "^5.4.1",
+    "i18next": "^25.7.3",
+    "keycloak-js": "^26.2.3",
+    "react-i18next": "^16.5.1"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.2.3",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react-swc": "^4.2.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.55.0",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-lib-inject-css": "^2.2.2",
+    "vitest": "^4.0.18"
+  },
+  "author": {
+    "name": "Red Hat, Inc.",
+    "url": "https://www.keycloak.org/"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keycloak/keycloak-react.git"
+  },
+  "homepage": "https://www.keycloak.org/",
+  "keywords": [
+    "keycloak",
+    "react",
+    "authentication",
+    "login",
+    "oauth",
+    "oidc"
+  ]
+}

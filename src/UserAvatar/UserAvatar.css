@@ -1,0 +1,62 @@
+.kc-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.kc-user-avatar--bordered {
+  box-shadow: 0 0 0 2px var(--pf-v5-global--BackgroundColor--100, #fff);
+}
+
+.kc-user-avatar--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kc-user-avatar--clickable:hover {
+  transform: scale(1.05);
+}
+
+.kc-user-avatar--clickable:focus {
+  outline: 2px solid var(--pf-v5-global--primary-color--100, #06c);
+  outline-offset: 2px;
+}
+
+.kc-user-avatar--clickable:active {
+  transform: scale(0.98);
+}
+
+.kc-user-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.kc-user-avatar__initials {
+  font-weight: 500;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Size variants - for reference, actual sizes are set via inline styles */
+.kc-user-avatar--sm {
+  /* 24px */
+}
+
+.kc-user-avatar--md {
+  /* 32px */
+}
+
+.kc-user-avatar--lg {
+  /* 48px */
+}
+
+.kc-user-avatar--xl {
+  /* 64px */
+}

@@ -1,0 +1,83 @@
+/* SignIn Component Styles */
+/* Uses PatternFly CSS variables for theming consistency with quick theme */
+
+/* Form wrapper */
+.kc-login-form {
+  width: 100%;
+}
+
+/* Social buttons section */
+.kc-social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-v5-global--spacer--sm, 8px);
+  width: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.kc-social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pf-v5-global--spacer--sm, 8px);
+  width: 100%;
+  padding: var(--pf-v5-global--spacer--sm, 8px) var(--pf-v5-global--spacer--md, 16px);
+  border: 1px solid var(--pf-v5-global--BorderColor--100, #d2d2d2);
+  border-radius: var(--pf-v5-global--BorderRadius--sm, 3px);
+  background-color: var(--pf-v5-global--BackgroundColor--100, #fff);
+  color: var(--pf-v5-global--Color--100, #151515);
+  text-decoration: none;
+  font-family: var(--pf-v5-global--FontFamily--text);
+  font-size: var(--pf-v5-global--FontSize--md, 14px);
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.kc-social-button:hover {
+  border-color: var(--pf-v5-global--primary-color--100, #0066cc);
+  background-color: var(--pf-v5-global--BackgroundColor--200, #f0f0f0);
+}
+
+.kc-social-button:focus {
+  outline: 2px solid var(--pf-v5-global--primary-color--100, #0066cc);
+  outline-offset: 2px;
+}
+
+/* Social button icons */
+.kc-social-button-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kc-social-button-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Social button text */
+.kc-social-button-text {
+  flex: 1;
+  text-align: center;
+}
+
+/* Grid layout for multiple social buttons (more than 3) */
+.kc-social-buttons--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--pf-v5-global--spacer--sm, 8px);
+}
+
+.kc-social-buttons--grid .kc-social-button {
+  justify-content: center;
+  padding: var(--pf-v5-global--spacer--md, 16px);
+}
+
+.kc-social-buttons--grid .kc-social-button-text {
+  display: none;
+}

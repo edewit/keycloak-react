@@ -1,0 +1,17 @@
+/**
+ * Keycloak React theme - uses PatternFly CSS variables
+ * 
+ * This file is minimal as we rely on PatternFly's CSS variables for theming.
+ * The appearance API maps to PatternFly variables for consistency with
+ * Keycloak's quick theme feature.
+ * 
+ * PatternFly variables used:
+ * - --pf-v5-global--primary-color--100: Primary brand color
+ * - --pf-v5-global--BackgroundColor--100: Card/surface background
+ * - --pf-v5-global--BackgroundColor--200: Page background
+ * - --pf-v5-global--Color--100: Primary text color
+ * - --pf-v5-global--Color--200: Secondary text color
+ * - --pf-v5-global--BorderColor--100: Border color
+ * - --pf-v5-global--BorderRadius--sm: Border radius
+ * - --pf-v5-global--FontFamily--text: Font family
+ */
