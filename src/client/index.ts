@@ -1,40 +1,39 @@
-// Provider and hooks
+// Client-side components for SSR apps (Next.js App Router)
+// These components work with Auth.js sessions
+// Tokens are NOT exposed to the client - they stay server-side only
+
 export {
   KeycloakAuthProvider,
   useAuth,
   useUser,
-  useKeycloak,
+  useHasRole,
+  useHasAnyRole,
   type KeycloakAuthProviderProps,
   type AuthContextValue,
   type User,
   type SignInOptions,
   type SignOutOptions,
-  type SignUpOptions,
-} from "./KeycloakAuthProvider";
+} from "./AuthProvider";
 
-// Context (for internal use by components)
 export { AuthContext } from "./AuthContext";
 
-// Control components
 export {
   SignedIn,
   SignedOut,
   RedirectToSignIn,
-  RedirectToSignUp,
   Protect,
   type SignedInProps,
   type SignedOutProps,
   type RedirectToSignInProps,
-  type RedirectToSignUpProps,
   type ProtectProps,
 } from "./ControlComponents";
 
-// Buttons
 export {
   SignInButton,
-  SignUpButton,
   SignOutButton,
   type SignInButtonProps,
-  type SignUpButtonProps,
   type SignOutButtonProps,
 } from "./Buttons";
+
+// Re-export from next-auth/react for convenience
+export { signIn, signOut, useSession } from "next-auth/react";

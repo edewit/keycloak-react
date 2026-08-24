@@ -1,10 +1,12 @@
+"use client";
+
 import { type ReactNode, useEffect } from "react";
-import { useAuth } from "./KeycloakAuthProvider";
+import { useAuth, useHasAnyRole } from "./AuthProvider";
 
 export interface SignedInProps {
   /** Content to render when the user is signed in */
   children: ReactNode;
-  /** 
+  /**
    * Optional fallback to render while loading.
    * If not provided, nothing is rendered during loading.
    */
@@ -16,6 +18,8 @@ export interface SignedInProps {
  *
  * @example
  * ```tsx
+ * "use client";
+ *
  * <SignedIn>
  *   <UserButton />
  *   <p>Welcome back!</p>
@@ -41,7 +45,7 @@ SignedIn.displayName = "SignedIn";
 export interface SignedOutProps {
   /** Content to render when the user is signed out */
   children: ReactNode;
-  /** 
+  /**
    * Optional fallback to render while loading.
    * If not provided, nothing is rendered during loading.
    */
@@ -53,6 +57,8 @@ export interface SignedOutProps {
  *
  * @example
  * ```tsx
+ * "use client";
+ *
  * <SignedOut>
  *   <SignInButton />
  *   <p>Please sign in to continue.</p>
@@ -77,66 +83,41 @@ SignedOut.displayName = "SignedOut";
 
 export interface RedirectToSignInProps {
   /** URL to redirect to after sign in (defaults to current URL) */
-  returnUrl?: string;
+  callbackUrl?: string;
 }
 
 /**
- * Redirects to the Keycloak sign in page.
+ * Redirects to the Auth.js sign in page.
  * Use this component to protect routes that require authentication.
  *
  * @example
  * ```tsx
+ * "use client";
+ *
  * function ProtectedPage() {
  *   const { isAuthenticated } = useAuth();
- *   
+ *
  *   if (!isAuthenticated) {
  *     return <RedirectToSignIn />;
  *   }
- *   
+ *
  *   return <div>Protected content</div>;
  * }
  * ```
  */
-export function RedirectToSignIn({ returnUrl }: RedirectToSignInProps) {
+export function RedirectToSignIn({ callbackUrl }: RedirectToSignInProps) {
   const { isLoading, isAuthenticated, signIn } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      signIn({ redirectUri: returnUrl });
+      signIn({ callbackUrl });
     }
-  }, [isLoading, isAuthenticated, signIn, returnUrl]);
+  }, [isLoading, isAuthenticated, signIn, callbackUrl]);
 
   return null;
 }
 
 RedirectToSignIn.displayName = "RedirectToSignIn";
-
-export interface RedirectToSignUpProps {
-  /** URL to redirect to after sign up (defaults to current URL) */
-  returnUrl?: string;
-}
-
-/**
- * Redirects to the Keycloak registration page.
- *
- * @example
- * ```tsx
- * <RedirectToSignUp returnUrl="/welcome" />
- * ```
- */
-export function RedirectToSignUp({ returnUrl }: RedirectToSignUpProps) {
-  const { isLoading, isAuthenticated, signUp } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      signUp({ redirectUri: returnUrl });
-    }
-  }, [isLoading, isAuthenticated, signUp, returnUrl]);
-
-  return null;
-}
-
-RedirectToSignUp.displayName = "RedirectToSignUp";
 
 export interface ProtectProps {
   /** Content to render when the user is authenticated */
@@ -153,12 +134,13 @@ export interface ProtectProps {
   loading?: ReactNode;
   /**
    * Required roles. User must have at least one of these roles.
+   * Checks both resource roles and realm roles.
    */
   roles?: string[];
   /**
-   * Required realm roles. User must have at least one of these realm roles.
+   * What to render when user doesn't have required roles.
    */
-  realmRoles?: string[];
+  unauthorizedFallback?: ReactNode;
 }
 
 /**
@@ -167,6 +149,8 @@ export interface ProtectProps {
  *
  * @example
  * ```tsx
+ * "use client";
+ *
  * // Basic protection
  * <Protect>
  *   <Dashboard />
@@ -178,19 +162,20 @@ export interface ProtectProps {
  * </Protect>
  *
  * // With role requirement
- * <Protect roles={['admin']}>
+ * <Protect roles={['admin']} unauthorizedFallback={<AccessDenied />}>
  *   <AdminPanel />
  * </Protect>
  * ```
  */
-export function Protect({ 
-  children, 
-  fallback, 
+export function Protect({
+  children,
+  fallback,
   loading,
   roles,
-  realmRoles,
+  unauthorizedFallback,
 }: ProtectProps) {
-  const { isLoading, isAuthenticated, signIn, keycloak } = useAuth();
+  const { isLoading, isAuthenticated, signIn } = useAuth();
+  const hasRequiredRole = useHasAnyRole(roles ?? []);
 
   if (isLoading) {
     return loading ? <>{loading}</> : null;
@@ -209,19 +194,8 @@ export function Protect({
   }
 
   // Check roles if specified
-  if (roles && roles.length > 0 && keycloak) {
-    const hasRole = roles.some(role => keycloak.hasResourceRole(role));
-    if (!hasRole) {
-      return null; // User doesn't have required role
-    }
-  }
-
-  // Check realm roles if specified
-  if (realmRoles && realmRoles.length > 0 && keycloak) {
-    const hasRealmRole = realmRoles.some(role => keycloak.hasRealmRole(role));
-    if (!hasRealmRole) {
-      return null; // User doesn't have required realm role
-    }
+  if (roles && roles.length > 0 && !hasRequiredRole) {
+    return unauthorizedFallback ? <>{unauthorizedFallback}</> : null;
   }
 
   return <>{children}</>;

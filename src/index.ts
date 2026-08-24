@@ -1,4 +1,42 @@
-// Main component exports
+/**
+ * Keycloak React - SSR Authentication Components
+ *
+ * This library provides two entry points:
+ *
+ * - `keycloak-react/server` - Server-side utilities (Auth.js config, session helpers)
+ * - `keycloak-react/client` - Client components (React hooks and components)
+ *
+ * For SSR apps (recommended), import from the specific entry points.
+ * This main entry re-exports client components for convenience.
+ */
+
+// Re-export client components from main entry for convenience
+export {
+  KeycloakAuthProvider,
+  useAuth,
+  useUser,
+  useHasRole,
+  useHasAnyRole,
+  SignedIn,
+  SignedOut,
+  RedirectToSignIn,
+  Protect,
+  SignInButton,
+  SignOutButton,
+  type KeycloakAuthProviderProps,
+  type AuthContextValue,
+  type User,
+  type SignInOptions,
+  type SignOutOptions,
+  type SignedInProps,
+  type SignedOutProps,
+  type RedirectToSignInProps,
+  type ProtectProps,
+  type SignInButtonProps,
+  type SignOutButtonProps,
+} from "./client";
+
+// Main component exports (UI components that work with both CSR and SSR)
 export {
   SignIn,
   type SignInProps,
@@ -92,41 +130,3 @@ export {
   DEFAULT_CONFIG_ELEMENT_ID,
   type FetchLoginConfigOptions,
 } from "./config";
-
-// Auth provider and hooks
-export {
-  KeycloakAuthProvider,
-  useAuth,
-  useUser,
-  useKeycloak,
-  type KeycloakAuthProviderProps,
-  type AuthContextValue,
-  type User,
-  type SignInOptions,
-  type SignOutOptions,
-  type SignUpOptions,
-} from "./auth";
-
-// Auth control components
-export {
-  SignedIn,
-  SignedOut,
-  RedirectToSignIn,
-  RedirectToSignUp,
-  Protect,
-  type SignedInProps,
-  type SignedOutProps,
-  type RedirectToSignInProps,
-  type RedirectToSignUpProps,
-  type ProtectProps,
-} from "./auth";
-
-// Auth buttons
-export {
-  SignInButton,
-  SignUpButton,
-  SignOutButton,
-  type SignInButtonProps,
-  type SignUpButtonProps,
-  type SignOutButtonProps,
-} from "./auth";

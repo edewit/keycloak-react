@@ -8,7 +8,7 @@ import {
   Divider,
 } from "@patternfly/react-core";
 import { UserAvatar, decodeToken, type UserAvatarSize, type UserTokenClaims } from "../UserAvatar";
-import { AuthContext } from "../auth/AuthContext";
+import { AuthContext } from "../client/AuthContext";
 import "./UserButton.css";
 
 export interface UserButtonMenuItem {
@@ -238,7 +238,7 @@ export function UserButton({
       }
     } else if (contextSignOut) {
       // Use context sign out if available
-      await contextSignOut({ redirectUri: afterSignOutUrl });
+      await contextSignOut({ callbackUrl: afterSignOutUrl });
     } else if (signOutUrl) {
       window.location.href = signOutUrl;
     }

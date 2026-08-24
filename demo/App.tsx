@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import {
-  // Auth provider and hooks
+  // Auth provider and hooks (from client module)
   KeycloakAuthProvider,
   useAuth,
   useUser,
-  useKeycloak,
+  useHasRole,
   // Control components
   SignedIn,
   SignedOut,
   Protect,
   // Buttons
   SignInButton,
-  SignUpButton,
   SignOutButton,
   // UI Components
   ConfigProvider,
@@ -22,26 +21,17 @@ import {
   type Appearance,
   type LoginConfig,
 } from '../src';
-import {
-  // Account UI provider and components
-  KeycloakProvider,
-  PersonalInfo,
-  DeviceActivity,
-  LinkedAccounts,
-  SigningIn,
-  Applications,
-  type AccountEnvironment,
-} from '../src/account';
 
-// Keycloak server configuration
-const KEYCLOAK_URL = 'http://localhost:8080';
-const REALM = 'master';
-const CLIENT_ID = 'demo'; // Use an existing public client
+// Note: This is a simplified demo that shows the client-side components.
+// In a real Next.js app, you would:
+// 1. Create auth.ts with createKeycloakAuth()
+// 2. Set up /api/auth/[...nextauth]/route.ts
+// 3. Pass session from server to KeycloakAuthProvider
 
-// Fallback config when keycloak-login-config-provider is not available
+// Fallback config for sign-in form demo (no server connection)
 const FALLBACK_CONFIG: LoginConfig = {
   realm: {
-    name: REALM,
+    name: 'demo',
     displayName: 'Demo Realm',
     registrationAllowed: true,
     resetPasswordAllowed: true,
@@ -84,20 +74,11 @@ const themes: Record<string, Appearance> = {
       borderRadius: '12px',
     },
   },
-  green: {
-    variables: {
-      colorPrimary: '#10b981',
-      colorPrimaryHover: '#059669',
-      colorBackground: '#f8fafc',
-      colorBackgroundCard: '#ffffff',
-      borderRadius: '8px',
-    },
-  },
 };
 
 // Auth status component - shows current auth state from context
 function AuthStatus() {
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, isAuthenticated, user, roles } = useAuth();
 
   if (isLoading) {
     return (
@@ -113,6 +94,9 @@ function AuthStatus() {
       <div className="auth-status authenticated">
         <span className="status-icon">✓</span>
         Signed in as <strong>{user.name || user.username || user.email}</strong>
+        {roles.length > 0 && (
+          <small> (roles: {roles.join(', ')})</small>
+        )}
       </div>
     );
   }
@@ -130,19 +114,16 @@ function DemoHeader() {
   return (
     <header className="demo-header">
       <div className="header-left">
-        <h1>Keycloak React Demo</h1>
+        <h1>Keycloak React Demo (SSR)</h1>
+        <small>Using Auth.js with Keycloak provider</small>
       </div>
       <div className="header-right">
         <SignedIn>
-          <UserButton 
-            manageAccountUrl={`${KEYCLOAK_URL}/realms/${REALM}/account`}
-            avatarSize="md"
-          />
+          <UserButton avatarSize="md" />
         </SignedIn>
         <SignedOut>
           <div className="auth-buttons">
             <SignInButton className="btn btn-primary">Sign In</SignInButton>
-            <SignUpButton className="btn btn-secondary">Sign Up</SignUpButton>
           </div>
         </SignedOut>
       </div>
@@ -150,69 +131,17 @@ function DemoHeader() {
   );
 }
 
-// Component to show config status for SignIn form
-function ConfigStatus({ useFallback }: { useFallback: boolean }) {
-  const { config, isLoading, error } = useConfig();
-
-  if (useFallback) {
-    return (
-      <p className="config-status info">
-        Using fallback configuration (no server connection)
-        <br />
-        <small>Social providers are for demo only</small>
-      </p>
-    );
-  }
-
-  if (isLoading) {
-    return <p className="config-status loading">Loading configuration from Keycloak...</p>;
-  }
-
-  if (error) {
-    return (
-      <p className="config-status error">
-        Error loading config: {error.message}
-        <br />
-        <small>
-          Make sure Keycloak is running on {KEYCLOAK_URL} with the{' '}
-          <a 
-            href="https://github.com/keycloak/keycloak-login-config-provider" 
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            keycloak-login-config-provider
-          </a>{' '}
-          installed
-        </small>
-      </p>
-    );
-  }
-
-  if (config) {
-    return (
-      <p className="config-status success">
-        Connected to realm: <strong>{config.realm.displayName || config.realm.name}</strong>
-        <br />
-        <small>
-          Identity providers: {config.identityProviders?.length || 0} | 
-          via keycloak-login-config-provider
-        </small>
-      </p>
-    );
-  }
-
-  return null;
-}
-
 // Demo section showing auth state
 function AuthStateDemo() {
-  const { isLoading, isAuthenticated, user, idToken, accessToken } = useAuth();
+  const { isLoading, isAuthenticated, user, roles, realmRoles, error } = useAuth();
   
   return (
     <div className="demo-section">
       <h3>Authentication State (useAuth)</h3>
       <p className="demo-description">
         Live authentication state from KeycloakAuthProvider context.
+        <br />
+        <strong>Note:</strong> Tokens are NOT exposed to the client. They're only available server-side.
       </p>
       <div className="auth-state-display">
         <div className="state-row">
@@ -240,12 +169,49 @@ function AuthStateDemo() {
           <span className="state-value">{user?.email || 'null'}</span>
         </div>
         <div className="state-row">
-          <span className="state-label">idToken:</span>
-          <span className="state-value token">{idToken ? `${idToken.substring(0, 20)}...` : 'null'}</span>
+          <span className="state-label">roles:</span>
+          <span className="state-value">{roles.length > 0 ? roles.join(', ') : '[]'}</span>
         </div>
         <div className="state-row">
+          <span className="state-label">realmRoles:</span>
+          <span className="state-value">{realmRoles.length > 0 ? realmRoles.join(', ') : '[]'}</span>
+        </div>
+        <div className="state-row">
+          <span className="state-label">error:</span>
+          <span className="state-value">{error || 'null'}</span>
+        </div>
+        <div className="state-row highlight">
           <span className="state-label">accessToken:</span>
-          <span className="state-value token">{accessToken ? `${accessToken.substring(0, 20)}...` : 'null'}</span>
+          <span className="state-value info">Server-side only (use getServerSession)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Demo for useHasRole hook
+function RoleCheckDemo() {
+  const isAdmin = useHasRole('admin');
+  const isUser = useHasRole('user');
+  
+  return (
+    <div className="demo-section">
+      <h3>Role Checks (useHasRole)</h3>
+      <p className="demo-description">
+        Check if the user has specific roles.
+      </p>
+      <div className="auth-state-display">
+        <div className="state-row">
+          <span className="state-label">useHasRole('admin'):</span>
+          <span className={`state-value ${isAdmin ? 'true' : 'false'}`}>
+            {String(isAdmin)}
+          </span>
+        </div>
+        <div className="state-row">
+          <span className="state-label">useHasRole('user'):</span>
+          <span className={`state-value ${isUser ? 'true' : 'false'}`}>
+            {String(isUser)}
+          </span>
         </div>
       </div>
     </div>
@@ -287,13 +253,15 @@ function ControlComponentsDemo() {
         </div>
 
         <div className="control-item">
-          <h4>Protect (with fallback)</h4>
+          <h4>Protect (with role requirement)</h4>
           <div className="control-result">
             <Protect 
-              fallback={<span className="protected-fallback">🔒 Protected content - please sign in</span>}
+              roles={['admin']}
+              fallback={<span className="protected-fallback">🔒 Sign in required</span>}
+              unauthorizedFallback={<span className="unauthorized">⛔ Admin role required</span>}
               loading={<span className="fallback">Checking access...</span>}
             >
-              <span className="visible">🔓 Protected content visible!</span>
+              <span className="visible">🔓 Admin content visible!</span>
             </Protect>
           </div>
         </div>
@@ -310,7 +278,7 @@ function UserAvatarDemo() {
     <div className="demo-section">
       <h3>UserAvatar</h3>
       <p className="demo-description">
-        Displays user profile picture with initials fallback. Auto-detects user from context.
+        Displays user profile picture with initials fallback.
       </p>
       <div className="avatar-demo">
         <div className="avatar-item">
@@ -344,43 +312,6 @@ function UserAvatarDemo() {
   );
 }
 
-// Demo section for UserButton
-function UserButtonDemo() {
-  return (
-    <div className="demo-section">
-      <h3>UserButton</h3>
-      <p className="demo-description">
-        Dropdown menu with user info, account management, and sign out. Auto-detects user from context.
-      </p>
-      <div className="user-button-demo">
-        <SignedIn>
-          <UserButton
-            manageAccountUrl={`${KEYCLOAK_URL}/realms/${REALM}/account`}
-            menuItems={[
-              { key: 'profile', label: 'View Profile', onClick: () => alert('Profile clicked') },
-              { key: 'settings', label: 'Settings', onClick: () => alert('Settings clicked') },
-            ]}
-            avatarSize="lg"
-          />
-          <span className="demo-label">Click to open menu (uses auth context)</span>
-        </SignedIn>
-        <SignedOut>
-          <UserButton
-            name="Demo User"
-            email="demo@example.com"
-            firstName="Demo"
-            lastName="User"
-            manageAccountUrl="#account"
-            onSignOut={() => alert('Sign out clicked!')}
-            avatarSize="lg"
-          />
-          <span className="demo-label">Click to open menu (manual props)</span>
-        </SignedOut>
-      </div>
-    </div>
-  );
-}
-
 // Demo section for auth buttons
 function AuthButtonsDemo() {
   return (
@@ -394,9 +325,6 @@ function AuthButtonsDemo() {
           <SignInButton className="btn btn-primary">
             Sign In
           </SignInButton>
-          <SignUpButton className="btn btn-secondary">
-            Create Account
-          </SignUpButton>
         </SignedOut>
         <SignedIn>
           <SignOutButton className="btn btn-danger">
@@ -408,135 +336,49 @@ function AuthButtonsDemo() {
   );
 }
 
-type DemoView = 'signin' | 'auth' | 'components' | 'account';
-type ConfigMode = 'server' | 'fallback';
-type AccountTab = 'personal-info' | 'device-activity' | 'linked-accounts' | 'signing-in' | 'applications' | 'groups';
+type DemoView = 'signin' | 'auth' | 'components';
 
-// Account UI Demo - shows embedded account management components
-function AccountDemo() {
-  const { isAuthenticated } = useAuth();
-  const keycloak = useKeycloak();
-  const [activeTab, setActiveTab] = useState<AccountTab>('personal-info');
+// Component to show config status for SignIn form
+function ConfigStatus() {
+  const { config, isLoading, error } = useConfig();
 
-  // Account environment configuration
-  const environment: AccountEnvironment = {
-    serverBaseUrl: KEYCLOAK_URL,
-    realm: REALM,
-    clientId: CLIENT_ID,
-    resourceUrl: '.',
-    logo: 'https://design.jboss.org/keycloak/logo/images/keycloak_icon_128px.png',
-    logoUrl: '/',
-    baseUrl: `${KEYCLOAK_URL}/realms/${REALM}/account`,
-    locale: 'en',
-    features: {
-      isRegistrationEmailAsUsername: false,
-      isEditUserNameAllowed: true,
-      isViewGroupsEnabled: true,
-      isLinkedAccountsEnabled: true,
-      deleteAccountAllowed: false,
-      updateEmailFeatureEnabled: true,
-      updateEmailActionEnabled: true,
-      isViewOrganizationsEnabled: false,
-      isMyResourcesEnabled: false,
-      isOid4VciEnabled: false,
-    },
-  };
+  if (isLoading) {
+    return <p className="config-status loading">Loading configuration...</p>;
+  }
 
-  const tabs: { key: AccountTab; label: string; requiresAuth?: boolean }[] = [
-    { key: 'personal-info', label: 'Personal Info', requiresAuth: true },
-    { key: 'device-activity', label: 'Device Activity', requiresAuth: true },
-    { key: 'linked-accounts', label: 'Linked Accounts', requiresAuth: true },
-    { key: 'signing-in', label: 'Signing In', requiresAuth: true },
-    { key: 'applications', label: 'Applications', requiresAuth: true },
-    { key: 'groups', label: 'Groups', requiresAuth: true },
-  ];
+  if (error) {
+    return <p className="config-status error">Error: {error.message}</p>;
+  }
 
-  if (!isAuthenticated) {
+  if (config) {
     return (
-      <div className="components-container">
-        <div className="demo-section">
-          <h3>Account Management</h3>
-          <p className="demo-description">
-            The Account UI components allow users to manage their profile, security settings, 
-            linked accounts, and more. Please sign in to access account management features.
-          </p>
-          <div className="account-signin-prompt">
-            <span className="lock-icon">🔒</span>
-            <p>Sign in to access your account settings</p>
-            <SignInButton className="btn btn-primary">Sign In</SignInButton>
-          </div>
-        </div>
-      </div>
+      <p className="config-status success">
+        Config loaded: <strong>{config.realm.displayName || config.realm.name}</strong>
+      </p>
     );
   }
 
-  return (
-    <div className="account-demo-container">
-      <div className="account-sidebar">
-        <h3>Account Settings</h3>
-        <nav className="account-nav">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`account-nav-item ${activeTab === tab.key ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="account-content">
-        <KeycloakProvider environment={environment} keycloak={keycloak!}>
-          {activeTab === 'personal-info' && (
-            <div className="account-panel">
-              <PersonalInfo />
-            </div>
-          )}
-          {activeTab === 'device-activity' && (
-            <div className="account-panel">
-              <DeviceActivity />
-            </div>
-          )}
-          {activeTab === 'linked-accounts' && (
-            <div className="account-panel">
-              <LinkedAccounts />
-            </div>
-          )}
-          {activeTab === 'signing-in' && (
-            <div className="account-panel">
-              <SigningIn />
-            </div>
-          )}
-          {activeTab === 'applications' && (
-            <div className="account-panel">
-              <Applications />
-            </div>
-          )}
-        </KeycloakProvider>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function AppContent() {
   const [selectedTheme, setSelectedTheme] = useState<string>('default');
   const [view, setView] = useState<DemoView>('auth');
-  const [configMode, setConfigMode] = useState<ConfigMode>('fallback');
 
   const handleSubmit = async (data: { username: string; password: string; rememberMe: boolean }) => {
     console.log('Sign in submitted:', data);
     alert(`Sign in attempted with:\nUsername: ${data.username}\nRemember Me: ${data.rememberMe}`);
   };
 
-  // Choose config source based on mode
-  const configProviderProps = configMode === 'server' 
-    ? { keycloakUrl: KEYCLOAK_URL, realm: REALM }
-    : { config: FALLBACK_CONFIG };
-
   return (
     <div className="demo-container">
       <DemoHeader />
+      
+      <div className="demo-notice">
+        <strong>SSR Demo Notice:</strong> This is a client-side demo. In production with Next.js, 
+        you would configure Auth.js with <code>createKeycloakAuth()</code> and pass the session 
+        from your server component. See the README for full setup instructions.
+      </div>
       
       <div className="demo-nav">
         <button
@@ -557,12 +399,6 @@ function AppContent() {
         >
           Sign In Form
         </button>
-        <button
-          className={`nav-button ${view === 'account' ? 'active' : ''}`}
-          onClick={() => setView('account')}
-        >
-          Account UI
-        </button>
       </div>
 
       <AuthStatus />
@@ -570,6 +406,7 @@ function AppContent() {
       {view === 'auth' && (
         <div className="components-container">
           <AuthStateDemo />
+          <RoleCheckDemo />
           <ControlComponentsDemo />
           <AuthButtonsDemo />
         </div>
@@ -578,38 +415,16 @@ function AppContent() {
       {view === 'components' && (
         <div className="components-container">
           <UserAvatarDemo />
-          <UserButtonDemo />
         </div>
       )}
 
       {view === 'signin' && (
-        <ConfigProvider {...configProviderProps}>
+        <ConfigProvider config={FALLBACK_CONFIG}>
           <div className="demo-controls">
-            <h2>Sign In Form Configuration</h2>
-            <div className="config-toggle">
-              <label className="toggle-label">
-                <input
-                  type="radio"
-                  name="configMode"
-                  checked={configMode === 'server'}
-                  onChange={() => setConfigMode('server')}
-                />
-                <span>Fetch from Server</span>
-                <small>(requires keycloak-login-config-provider)</small>
-              </label>
-              <label className="toggle-label">
-                <input
-                  type="radio"
-                  name="configMode"
-                  checked={configMode === 'fallback'}
-                  onChange={() => setConfigMode('fallback')}
-                />
-                <span>Use Fallback Config</span>
-                <small>(no server required)</small>
-              </label>
-            </div>
+            <h2>Sign In Form Demo</h2>
+            <p>This shows the customizable sign-in form component (uses fallback config).</p>
             
-            <h2>Theme</h2>
+            <h3>Theme</h3>
             <div className="theme-buttons">
               {Object.keys(themes).map((theme) => (
                 <button
@@ -622,7 +437,7 @@ function AppContent() {
               ))}
             </div>
             
-            <ConfigStatus useFallback={configMode === 'fallback'} />
+            <ConfigStatus />
           </div>
 
           <div className="signin-container">
@@ -637,25 +452,17 @@ function AppContent() {
           </div>
         </ConfigProvider>
       )}
-
-      {view === 'account' && <AccountDemo />}
     </div>
   );
 }
 
 function App() {
+  // In a real Next.js app, you would pass the session from a server component:
+  // const session = await auth();
+  // <KeycloakAuthProvider session={session}>
+  
   return (
-    <KeycloakAuthProvider
-      url={KEYCLOAK_URL}
-      realm={REALM}
-      clientId={CLIENT_ID}
-      onAuthStateChange={(isAuthenticated, user) => {
-        console.log('Auth state changed:', isAuthenticated, user);
-      }}
-      onError={(error) => {
-        console.error('Auth error:', error);
-      }}
-    >
+    <KeycloakAuthProvider>
       <AppContent />
     </KeycloakAuthProvider>
   );

@@ -1,5 +1,5 @@
 import { useState, useMemo, useContext, type CSSProperties } from "react";
-import { AuthContext } from "../auth/AuthContext";
+import { AuthContext } from "../client/AuthContext";
 import "./UserAvatar.css";
 
 export type UserAvatarSize = "sm" | "md" | "lg" | "xl";

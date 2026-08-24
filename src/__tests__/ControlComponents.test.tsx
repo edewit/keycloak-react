@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { SignedIn, SignedOut, Protect } from '../auth/ControlComponents';
-import { AuthContext, type AuthContextValue } from '../auth/AuthContext';
+import { SignedIn, SignedOut, Protect } from '../client/ControlComponents';
+import { AuthContext, type AuthContextValue } from '../client/AuthContext';
 import type { ReactNode } from 'react';
 
 // Helper to create mock auth context
@@ -10,13 +10,10 @@ function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthC
     isLoading: false,
     isAuthenticated: false,
     user: null,
-    idToken: undefined,
-    accessToken: undefined,
+    roles: [],
+    realmRoles: [],
     signIn: vi.fn(),
     signOut: vi.fn(),
-    signUp: vi.fn(),
-    getToken: vi.fn(),
-    keycloak: null,
     ...overrides,
   };
 }
@@ -209,14 +206,11 @@ describe('Protect', () => {
     expect(screen.getByText('Checking access...')).toBeInTheDocument();
   });
 
-  it('should check resource roles when specified', () => {
-    const mockKeycloak = {
-      hasResourceRole: vi.fn((role: string) => role === 'admin'),
-      hasRealmRole: vi.fn(() => false),
-    };
+  it('should check roles when specified', () => {
     const authValue = createMockAuthContext({
       isAuthenticated: true,
-      keycloak: mockKeycloak as any,
+      roles: ['admin'],
+      realmRoles: [],
     });
 
     render(
@@ -227,18 +221,14 @@ describe('Protect', () => {
       </AuthWrapper>
     );
 
-    expect(mockKeycloak.hasResourceRole).toHaveBeenCalledWith('admin');
     expect(screen.getByText('Admin content')).toBeInTheDocument();
   });
 
   it('should hide content when user lacks required role', () => {
-    const mockKeycloak = {
-      hasResourceRole: vi.fn(() => false),
-      hasRealmRole: vi.fn(() => false),
-    };
     const authValue = createMockAuthContext({
       isAuthenticated: true,
-      keycloak: mockKeycloak as any,
+      roles: ['user'],
+      realmRoles: [],
     });
 
     render(
@@ -252,25 +242,40 @@ describe('Protect', () => {
     expect(screen.queryByText('Admin content')).not.toBeInTheDocument();
   });
 
-  it('should check realm roles when specified', () => {
-    const mockKeycloak = {
-      hasResourceRole: vi.fn(() => false),
-      hasRealmRole: vi.fn((role: string) => role === 'offline_access'),
-    };
+  it('should render unauthorized fallback when user lacks role', () => {
     const authValue = createMockAuthContext({
       isAuthenticated: true,
-      keycloak: mockKeycloak as any,
+      roles: ['user'],
+      realmRoles: [],
     });
 
     render(
       <AuthWrapper value={authValue}>
-        <Protect realmRoles={['offline_access']}>
+        <Protect roles={['admin']} unauthorizedFallback={<div>Access denied</div>}>
+          <div>Admin content</div>
+        </Protect>
+      </AuthWrapper>
+    );
+
+    expect(screen.getByText('Access denied')).toBeInTheDocument();
+    expect(screen.queryByText('Admin content')).not.toBeInTheDocument();
+  });
+
+  it('should check realm roles', () => {
+    const authValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: [],
+      realmRoles: ['offline_access'],
+    });
+
+    render(
+      <AuthWrapper value={authValue}>
+        <Protect roles={['offline_access']}>
           <div>Offline content</div>
         </Protect>
       </AuthWrapper>
     );
 
-    expect(mockKeycloak.hasRealmRole).toHaveBeenCalledWith('offline_access');
     expect(screen.getByText('Offline content')).toBeInTheDocument();
   });
 });

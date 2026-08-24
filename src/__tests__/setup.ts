@@ -2,6 +2,14 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
+// Mock next-auth/react before any imports
+vi.mock('next-auth/react', () => ({
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+}));
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

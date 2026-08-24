@@ -3,6 +3,7 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import { libInjectCss } from "vite-plugin-lib-inject-css";
+import preserveDirectives from "rollup-preserve-directives";
 
 export default defineConfig(({ command }) => {
   // Dev mode: serve the demo app
@@ -17,7 +18,6 @@ export default defineConfig(({ command }) => {
           react: resolve(__dirname, "node_modules/react"),
           "react-dom": resolve(__dirname, "node_modules/react-dom"),
           "react/jsx-runtime": resolve(__dirname, "node_modules/react/jsx-runtime"),
-          "keycloak-js": resolve(__dirname, "node_modules/keycloak-js"),
           "react-i18next": resolve(__dirname, "node_modules/react-i18next"),
           "i18next": resolve(__dirname, "node_modules/i18next"),
         },
@@ -43,6 +43,8 @@ export default defineConfig(({ command }) => {
       lib: {
         entry: {
           "keycloak-react": resolve(__dirname, "src/index.ts"),
+          "server": resolve(__dirname, "src/server.ts"),
+          "client": resolve(__dirname, "src/client.ts"),
           "account": resolve(__dirname, "src/account.ts"),
         },
         name: "KeycloakReact",
@@ -54,8 +56,15 @@ export default defineConfig(({ command }) => {
           "react",
           "react-dom",
           "react/jsx-runtime",
+          "next-auth",
+          "next-auth/react",
+          "next-auth/jwt",
+          "next-auth/providers/keycloak",
+          "next/server",
+          "next/headers",
           /^@patternfly\/.*/,
         ],
+        plugins: [preserveDirectives()],
         output: {
           globals: {
             react: "React",

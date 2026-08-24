@@ -1,8 +1,8 @@
 import { createContext } from "react";
-import type Keycloak from "keycloak-js";
 
 /**
- * User information extracted from the Keycloak token.
+ * User information from the session.
+ * This is safe to expose to the client - no tokens included.
  */
 export interface User {
   /** User's unique ID (sub claim) */
@@ -21,27 +21,26 @@ export interface User {
   username?: string;
   /** URL to user's profile picture */
   imageUrl?: string;
-  /** Raw token claims */
-  claims: Record<string, unknown>;
+  /** User's resource roles */
+  roles?: string[];
+  /** User's realm roles */
+  realmRoles?: string[];
 }
 
 export interface SignInOptions {
   /** URL to redirect to after sign in */
-  redirectUri?: string;
+  callbackUrl?: string;
 }
 
 export interface SignOutOptions {
   /** URL to redirect to after sign out */
-  redirectUri?: string;
-}
-
-export interface SignUpOptions {
-  /** URL to redirect to after sign up */
-  redirectUri?: string;
+  callbackUrl?: string;
 }
 
 /**
- * Authentication state and methods provided by KeycloakAuthProvider.
+ * Authentication context value.
+ * Note: Unlike the CSR version, this does NOT expose tokens.
+ * Tokens are only available on the server.
  */
 export interface AuthContextValue {
   /** Whether the auth state is still being determined */
@@ -50,20 +49,16 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   /** The authenticated user, or null if not authenticated */
   user: User | null;
-  /** The raw ID token string */
-  idToken: string | undefined;
-  /** The raw access token string */
-  accessToken: string | undefined;
-  /** Sign in - redirects to Keycloak login */
+  /** User's resource roles */
+  roles: string[];
+  /** User's realm roles */
+  realmRoles: string[];
+  /** Sign in - redirects to Auth.js sign in */
   signIn: (options?: SignInOptions) => Promise<void>;
-  /** Sign out - redirects to Keycloak logout */
+  /** Sign out - redirects to Auth.js sign out */
   signOut: (options?: SignOutOptions) => Promise<void>;
-  /** Sign up - redirects to Keycloak registration */
-  signUp: (options?: SignUpOptions) => Promise<void>;
-  /** Get a fresh access token */
-  getToken: () => Promise<string | undefined>;
-  /** The underlying Keycloak instance (for advanced usage) */
-  keycloak: Keycloak | null;
+  /** Any error from the session (e.g., token refresh failed) */
+  error?: string;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

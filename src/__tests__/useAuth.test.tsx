@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useAuth, useUser, useKeycloak } from '../auth/KeycloakAuthProvider';
-import { AuthContext, type AuthContextValue, type User } from '../auth/AuthContext';
+import { useAuth, useUser, useHasRole, useHasAnyRole } from '../client/AuthProvider';
+import { AuthContext, type AuthContextValue, type User } from '../client/AuthContext';
 import type { ReactNode } from 'react';
 
 // Helper to create mock auth context
@@ -10,13 +10,10 @@ function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthC
     isLoading: false,
     isAuthenticated: false,
     user: null,
-    idToken: undefined,
-    accessToken: undefined,
+    roles: [],
+    realmRoles: [],
     signIn: vi.fn(),
     signOut: vi.fn(),
-    signUp: vi.fn(),
-    getToken: vi.fn(),
-    keycloak: null,
     ...overrides,
   };
 }
@@ -47,7 +44,6 @@ describe('useAuth', () => {
         id: 'user-123',
         email: 'test@example.com',
         name: 'Test User',
-        claims: {},
       },
     });
 
@@ -78,8 +74,8 @@ describe('useAuth', () => {
       wrapper: createWrapper(mockValue),
     });
 
-    result.current.signIn({ redirectUri: '/dashboard' });
-    expect(signIn).toHaveBeenCalledWith({ redirectUri: '/dashboard' });
+    result.current.signIn({ callbackUrl: '/dashboard' });
+    expect(signIn).toHaveBeenCalledWith({ callbackUrl: '/dashboard' });
   });
 
   it('should provide signOut function', () => {
@@ -90,46 +86,38 @@ describe('useAuth', () => {
       wrapper: createWrapper(mockValue),
     });
 
-    result.current.signOut({ redirectUri: '/' });
-    expect(signOut).toHaveBeenCalledWith({ redirectUri: '/' });
+    result.current.signOut({ callbackUrl: '/' });
+    expect(signOut).toHaveBeenCalledWith({ callbackUrl: '/' });
   });
 
-  it('should provide signUp function', () => {
-    const signUp = vi.fn();
-    const mockValue = createMockAuthContext({ signUp });
-
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: createWrapper(mockValue),
-    });
-
-    result.current.signUp({ redirectUri: '/welcome' });
-    expect(signUp).toHaveBeenCalledWith({ redirectUri: '/welcome' });
-  });
-
-  it('should provide getToken function', async () => {
-    const getToken = vi.fn().mockResolvedValue('mock-token');
-    const mockValue = createMockAuthContext({ getToken });
-
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: createWrapper(mockValue),
-    });
-
-    const token = await result.current.getToken();
-    expect(token).toBe('mock-token');
-  });
-
-  it('should expose tokens', () => {
+  it('should return roles', () => {
     const mockValue = createMockAuthContext({
-      idToken: 'id-token-123',
-      accessToken: 'access-token-456',
+      isAuthenticated: true,
+      roles: ['admin', 'editor'],
+      realmRoles: ['offline_access'],
     });
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: createWrapper(mockValue),
     });
 
-    expect(result.current.idToken).toBe('id-token-123');
-    expect(result.current.accessToken).toBe('access-token-456');
+    expect(result.current.roles).toEqual(['admin', 'editor']);
+    expect(result.current.realmRoles).toEqual(['offline_access']);
+  });
+
+  it('should NOT expose tokens (tokens are server-side only)', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+    });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(mockValue),
+    });
+
+    // Tokens should not be present in the client context
+    expect((result.current as any).accessToken).toBeUndefined();
+    expect((result.current as any).idToken).toBeUndefined();
+    expect((result.current as any).getToken).toBeUndefined();
   });
 });
 
@@ -153,7 +141,8 @@ describe('useUser', () => {
       lastName: 'Doe',
       username: 'janedoe',
       emailVerified: true,
-      claims: { custom: 'claim' },
+      roles: ['user'],
+      realmRoles: [],
     };
     const mockValue = createMockAuthContext({ user });
 
@@ -167,25 +156,90 @@ describe('useUser', () => {
   });
 });
 
-describe('useKeycloak', () => {
-  it('should return null when no keycloak instance', () => {
-    const mockValue = createMockAuthContext({ keycloak: null });
+describe('useHasRole', () => {
+  it('should return false when user does not have role', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: ['user'],
+      realmRoles: [],
+    });
 
-    const { result } = renderHook(() => useKeycloak(), {
+    const { result } = renderHook(() => useHasRole('admin'), {
       wrapper: createWrapper(mockValue),
     });
 
-    expect(result.current).toBeNull();
+    expect(result.current).toBe(false);
   });
 
-  it('should return keycloak instance when available', () => {
-    const mockKeycloak = { authenticated: true } as any;
-    const mockValue = createMockAuthContext({ keycloak: mockKeycloak });
+  it('should return true when user has resource role', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: ['admin', 'user'],
+      realmRoles: [],
+    });
 
-    const { result } = renderHook(() => useKeycloak(), {
+    const { result } = renderHook(() => useHasRole('admin'), {
       wrapper: createWrapper(mockValue),
     });
 
-    expect(result.current).toBe(mockKeycloak);
+    expect(result.current).toBe(true);
+  });
+
+  it('should return true when user has realm role', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: [],
+      realmRoles: ['offline_access'],
+    });
+
+    const { result } = renderHook(() => useHasRole('offline_access'), {
+      wrapper: createWrapper(mockValue),
+    });
+
+    expect(result.current).toBe(true);
+  });
+});
+
+describe('useHasAnyRole', () => {
+  it('should return false when user has none of the roles', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: ['user'],
+      realmRoles: [],
+    });
+
+    const { result } = renderHook(() => useHasAnyRole(['admin', 'editor']), {
+      wrapper: createWrapper(mockValue),
+    });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('should return true when user has one of the roles', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: ['editor'],
+      realmRoles: [],
+    });
+
+    const { result } = renderHook(() => useHasAnyRole(['admin', 'editor']), {
+      wrapper: createWrapper(mockValue),
+    });
+
+    expect(result.current).toBe(true);
+  });
+
+  it('should check realm roles too', () => {
+    const mockValue = createMockAuthContext({
+      isAuthenticated: true,
+      roles: [],
+      realmRoles: ['offline_access'],
+    });
+
+    const { result } = renderHook(() => useHasAnyRole(['admin', 'offline_access']), {
+      wrapper: createWrapper(mockValue),
+    });
+
+    expect(result.current).toBe(true);
   });
 });
